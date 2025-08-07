@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloudinary File Uploader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cloudinary-core/2.13.0/cloudinary-core-shrinkwrap.min.js"></script>
+    <style>
+        .upload-area {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .upload-area.dragover {
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+            border-color: #0ea5e9;
+            transform: scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .progress-bar {
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .fade-in {
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+        .bounce-in {
+            animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.05) rotate(2deg); }
+            70% { transform: scale(0.9) rotate(-1deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .pulse-glow {
+            animation: pulseGlow 2s infinite;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+                transform: scale(1.02);
+            }
+        }
+        .slide-up {
+            animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .gradient-border {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2px;
+            border-radius: 12px;
+        }
+        .gradient-border-inner {
+            background: white;
+            border-radius: 10px;
+        }
+        .success-animation {
+            animation: successPulse 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); background-color: #10b981; }
+            100% { transform: scale(1); }
+        }
+        .copy-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .copy-fade-out {
+            animation: fadeOutRight 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes fadeOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        .hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .rotating-icon {
+            animation: rotate 20s linear infinite;
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen p-4">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-12 bounce-in">
+            <div class="relative inline-block">
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full blur-lg opacity-30 rotating-icon"></div>
+                <div class="relative bg-white rounded-full p-4 shadow-lg mb-6">
+                    <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 12l2 2 4-4"></path>
+                    </svg>
+                </div>
+            </div>
+            <h1 class="text-5xl font-bold text-gray-800 mb-4">
+                <span class="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                    CloudSync Pro
+                </span>
+            </h1>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                Professional file management with seamless Cloudinary integration. 
+                Upload, manage, and share your media assets with enterprise-grade reliability.
+            </p>
+        </div>
+
+        <!-- Upload Area - Main Focus -->
+        <div class="gradient-border mb-8 hover-lift">
+            <div class="gradient-border-inner">
+                <div id="uploadArea" class="upload-area border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer">
+                    <div class="mb-6">
+                        <div class="relative inline-block">
+                            <svg class="mx-auto h-20 w-20 text-gray-400 transition-all duration-300 hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <div class="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center pulse-glow">
+                                <span class="text-white text-xs font-bold">+</span>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">Drop your files here</h3>
+                    <p class="text-gray-600 mb-4 text-lg">or click to browse from your device</p>
+                    <div class="flex justify-center space-x-6 mb-6">
+                        <div class="flex items-center space-x-2 text-sm text-gray-500">
+                            <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                            <span>Images</span>
+                        </div>
+                        <div class="flex items-center space-x-2 text-sm text-gray-500">
+                            <span class="w-2 h-2 bg-blue-400 rounded-full"></span>
+                            <span>Videos</span>
+                        </div>
+                        <div class="flex items-center space-x-2 text-sm text-gray-500">
+                            <span class="w-2 h-2 bg-purple-400 rounded-full"></span>
+                            <span>Audio</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-400">Maximum file size: 100MB • Multiple files supported</p>
+                    <input type="file" id="fileInput" multiple accept="image/*,video/*,audio/*" class="hidden">
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Progress -->
+        <div id="progressSection" class="glass-effect rounded-xl shadow-xl p-8 mb-8 hidden slide-up">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-gray-800">Upload Progress</h3>
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span class="text-sm text-gray-600">Processing...</span>
+                </div>
+            </div>
+            <div id="progressContainer" class="space-y-4"></div>
+        </div>
+
+        <!-- Results -->
+        <div id="resultsSection" class="glass-effect rounded-xl shadow-xl p-8 hidden slide-up">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800">Successfully Uploaded</h3>
+                </div>
+                <button onclick="clearResults()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:shadow-lg">
+                    Clear All
+                </button>
+            </div>
+            <div id="resultsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-12 fade-in">
+            <p class="text-gray-500">Powered by Cloudinary • Secure • Fast • Reliable</p>
+        </div>
+    </div>
+
+    <!-- Copy Notification -->
+    <div id="copyNotification" class="copy-notification hidden">
+        <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            <span class="font-medium">Link copied to clipboard!</span>
+        </div>
+    </div>
+
+    <script>
+        let cloudinaryConfig = {
+            cloudName: 'dry3pzan6',
+            uploadPreset: 'sample'
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            showWelcomeAnimation();
+        });
+
+        function showWelcomeAnimation() {
+            const elements = document.querySelectorAll('.bounce-in, .fade-in');
+            elements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                }, index * 100);
+            });
+        }
+
+        function setupEventListeners() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+
+            // Click to upload
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+                uploadArea.classList.add('pulse-glow');
+                setTimeout(() => uploadArea.classList.remove('pulse-glow'), 1000);
+            });
+
+            // File input change
+            fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+            // Enhanced drag and drop with animations
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                if (!uploadArea.contains(e.relatedTarget)) {
+                    uploadArea.classList.remove('dragover');
+                }
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                uploadArea.classList.add('success-animation');
+                setTimeout(() => uploadArea.classList.remove('success-animation'), 600);
+                handleFiles(e.dataTransfer.files);
+            });
+        }
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+
+            const progressSection = document.getElementById('progressSection');
+            const progressContainer = document.getElementById('progressContainer');
+            
+            progressSection.classList.remove('hidden');
+            progressSection.classList.add('slide-up');
+            progressContainer.innerHTML = '';
+
+            Array.from(files).forEach((file, index) => {
+                if (file.size > 100 * 1024 * 1024) { // 100MB limit
+                    showNotification(`File ${file.name} is too large. Maximum size is 100MB.`, 'error');
+                    return;
+                }
+                setTimeout(() => uploadFile(file, index), index * 100);
+            });
+        }
+
+        function uploadFile(file, index) {
+            const progressContainer = document.getElementById('progressContainer');
+            
+            // Create enhanced progress item
+            const progressItem = document.createElement('div');
+            progressItem.className = 'bg-white rounded-xl p-6 shadow-lg fade-in hover-lift border border-gray-100';
+            progressItem.innerHTML = `
+                <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center">
+                            <span class="text-white text-lg">${getFileIcon(file.type)}</span>
+                        </div>
+                    </div>
+                    <div class="flex-grow min-w-0">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-lg font-semibold text-gray-800 truncate">${file.name}</h4>
+                            <span id="status-${index}" class="text-sm text-blue-600 font-medium">Preparing...</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div id="progress-${index}" class="progress-bar bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-2">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                </div>
+            `;
+            progressContainer.appendChild(progressItem);
+
+            // Upload to Cloudinary
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', cloudinaryConfig.uploadPreset);
+            
+            const xhr = new XMLHttpRequest();
+            
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    const progressBar = document.getElementById(`progress-${index}`);
+                    const statusElement = document.getElementById(`status-${index}`);
+                    
+                    progressBar.style.width = percentComplete + '%';
+                    statusElement.textContent = `Uploading... ${Math.round(percentComplete)}%`;
+                    
+                    if (percentComplete === 100) {
+                        statusElement.textContent = 'Processing...';
+                        progressBar.classList.add('shimmer');
+                    }
+                }
+            });
+
+            xhr.addEventListener('load', () => {
+                const progressBar = document.getElementById(`progress-${index}`);
+                const statusElement = document.getElementById(`status-${index}`);
+                progressBar.classList.remove('shimmer');
+                
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    statusElement.textContent = 'Upload complete!';
+                    statusElement.className = 'text-sm text-green-600 font-medium';
+                    progressBar.classList.add('success-animation');
+                    
+                    setTimeout(() => addResult(file, response), 500);
+                } else {
+                    statusElement.textContent = 'Upload failed';
+                    statusElement.className = 'text-sm text-red-600 font-medium';
+                    progressBar.style.background = '#ef4444';
+                }
+            });
+
+            xhr.addEventListener('error', () => {
+                document.getElementById(`status-${index}`).textContent = 'Upload error';
+                document.getElementById(`status-${index}`).className = 'text-sm text-red-600 font-medium';
+            });
+
+            xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/auto/upload`);
+            xhr.send(formData);
+        }      
+
+        function getFileIcon(fileType) {
+            const type = fileType.split('/')[0];
+            switch(type) {
+                case 'image': return '🖼️';
+                case 'video': return '🎥';
+                case 'audio': return '🎵';
+                default: return '📁';
+            }
+        }
+
+        function addResult(file, response) {
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            resultsSection.classList.remove('hidden');
+            resultsSection.classList.add('slide-up');
+
+            const fileType = file.type.split('/')[0];
+            let preview = '';
+
+            if (fileType === 'image') {
+                preview = `<img src="${response.secure_url}" alt="${file.name}" class="w-full h-48 object-cover rounded-lg">`;
+            } else if (fileType === 'video') {
+                preview = `<video src="${response.secure_url}" class="w-full h-48 object-cover rounded-lg" controls></video>`;
+            } else if (fileType === 'audio') {
+                preview = `<div class="w-full h-48 bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg flex items-center justify-center">
+                    <div class="text-center text-white">
+                        <div class="text-4xl mb-2">🎵</div>
+                        <p class="text-sm">Audio File</p>
+                    </div>
+                </div>`;
+            }
+
+            const resultItem = document.createElement('div');
+            resultItem.className = 'bg-white rounded-xl shadow-lg overflow-hidden fade-in hover-lift border border-gray-100';
+            resultItem.innerHTML = `
+                <div class="relative">
+                    ${preview}
+                    <div class="absolute top-3 right-3">
+                        <span class="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded-full">
+                            ${(file.size / 1024 / 1024).toFixed(1)} MB
+                        </span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <span class="text-xl">${getFileIcon(file.type)}</span>
+                        <h4 class="text-lg font-semibold text-gray-900 truncate">${file.name}</h4>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-2">
+                            <input type="text" value="${response.secure_url}" readonly 
+                                   class="flex-grow text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 font-mono text-gray-600">
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="copyToClipboard('${response.secure_url}', this)" 
+                                    class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                                <span>Copy Link</span>
+                            </button>
+                            <a href="${response.secure_url}" target="_blank" 
+                               class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                </svg>
+                                <span>Open</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            resultsContainer.appendChild(resultItem);
+        }
+
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Show animated notification
+                showCopyNotification();
+                
+                // Button animation
+                const originalHTML = button.innerHTML;
+                button.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Copied!</span>
+                `;
+                button.classList.add('success-animation');
+                button.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                    button.classList.remove('success-animation');
+                    button.style.background = '';
+                }, 2000);
+            });
+        }
+
+        function showCopyNotification() {
+            const notification = document.getElementById('copyNotification');
+            notification.classList.remove('hidden', 'copy-fade-out');
+            notification.classList.add('copy-notification');
+            
+            setTimeout(() => {
+                notification.classList.add('copy-fade-out');
+                setTimeout(() => {
+                    notification.classList.add('hidden');
+                    notification.classList.remove('copy-fade-out');
+                }, 500);
+            }, 2000);
+        }
+
+        function clearResults() {
+            const resultsContainer = document.getElementById('resultsContainer');
+            const progressContainer = document.getElementById('progressContainer');
+            
+            // Animate out each item
+            const items = resultsContainer.children;
+            Array.from(items).forEach((item, index) => {
+                setTimeout(() => {
+                    item.style.animation = 'fadeOutRight 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                    setTimeout(() => item.remove(), 500);
+                }, index * 100);
+            });
+            
+            setTimeout(() => {
+                document.getElementById('resultsSection').classList.add('hidden');
+                document.getElementById('progressSection').classList.add('hidden');
+                progressContainer.innerHTML = '';
+            }, items.length * 100 + 500);
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create and show notification (simplified version)
+            console.log(`${type.toUpperCase()}: ${message}`);
+        }
+    </script>
+</body>
+</html>
